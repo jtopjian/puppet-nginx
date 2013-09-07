@@ -1,24 +1,27 @@
 class nginx::server (
-  $threadcount      = hiera('nginx_threadcount'),
-  $user             = hiera('nginx_user'),
-  $hash_bucket_size = hiera('nginx_hash_bucket_size'),
-  $etcdir           = hiera('nginx_etcdir'),
-  $vdir             = hiera('nginx_vdir'),
-) {
+  $package_ensure   = 'latest',
+  $service_enable   = true,
+  $user             = $::nginx::params::user,
+  $conf_dir         = $::nginx::params::conf_dir,
+  $vhost_dir        = $::nginx::params::vhost_dir,
+  $threadcount      = $::processorcount,
+  $hash_bucket_size = 32,
+) inherits nginx::params {
 
   package { 'nginx':
-    ensure => hiera('nginx_package_ensure'),
-    name   => hiera('nginx_package'),
+    name   => $::nginx::params::package_name,
+    ensure => $package_ensure,
   }
 
-  $service_ensure = hiera('nginx_service_ensure')
-  if ($service_ensure == 'running') {
-    $service_enable = true
+  if $service_enable {
+    $service_ensure = 'running'
   } else {
-    $service_enable = false
+    $service_ensure = 'stopped'
   }
+
   service { 'nginx':
-    ensure    => hiera('nginx_service_ensure'),
+    name      => $::nginx::params::service_name,
+    ensure    => $service_ensure,
     enable    => $service_enable,
     subscribe => Package['nginx'],
   }
@@ -29,11 +32,11 @@ class nginx::server (
   }
 
   file {
-    $vdir:
+    $vhost_dir:
       ensure  => directory,
       recurse => true,
       purge   => true;
-    "${etcdir}/nginx.conf":
+    "${conf_dir}/nginx.conf":
       ensure  => present,
       content => template('nginx/nginx.conf.erb'),
       owner   => 'root',

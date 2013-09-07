@@ -22,6 +22,7 @@ define nginx::vhost (
   $vhostroot        = '',
   $autoindex        = false,
   $webroot          = '/var/www',
+  $vhost_dir        = '/etc/nginx/sites-enabled'
 ) {
 
   # Determine the name of the vhost
@@ -39,7 +40,7 @@ define nginx::vhost (
   }
 
   # Write the nginx configuration
-  $vdir = hiera('nginx_vdir')
+  $vdir = $vhost_dir
   file { "${vdir}/${priority}-${name}":
     content => template($template),
     owner   => 'root',
